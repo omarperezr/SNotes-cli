@@ -1,45 +1,18 @@
-import os
+from os import mkdir
 import shelve
 from datetime import datetime
-from dbm import error as dbmError
+from dbm import error
 
-import base64
-import hashlib
+from hashlib import sha256
+from base64 import b64encode, b64decode
 from Crypto import Random
 from Crypto.Cipher import AES
 
 
-__all__ = ['Note', 'nterm_usage', 'new_note', 'search_note', 'show_all_notes', 'del_note', 'del_all',
-           'AESCipher']
+__all__ = ['Note', 'new_note', 'search_note', 'show_all_notes', 'del_note', 'del_all', 'nterm_usage',
+           'AESCipher', 'dbmError']
 
-
-class AESCipher:
-    def __init__(self, key):
-        self.bs = 16
-        self.key = hashlib.sha256(key.encode('UTF-8')).digest()
-
-    def pad(self, s):
-        return s + (self.bs - len(s) % self.bs) * chr(self.bs - len(s) % self.bs)
-
-    @staticmethod
-    def unpad(s):
-        return s[0:-s[-1]]
-
-    def encrypt(self, note_text):
-        note_text = self.pad(note_text)
-        iv = Random.new().read(AES.block_size)
-        cipher = AES.new(self.key, AES.MODE_CBC, iv)
-        return base64.b64encode(iv + cipher.encrypt(note_text))
-
-    def decrypt(self, note_cod):
-        try:
-            with shelve.open("./data/notes", "r") as notes_db:
-                enc = base64.b64decode(notes_db[note_cod].text)
-                iv = enc[:16]
-                cipher = AES.new(self.key, AES.MODE_CBC, iv)
-                print(self.unpad(cipher.decrypt(enc[16:])).decode('UTF-8'))
-        except KeyError:
-            print(f"\nNo note with the id {note_cod} exists")
+dbmError = error
 
 
 class Note:
@@ -61,6 +34,40 @@ Last modification: {self.date}
 
     def get_data(self):
         return self.title + " " + self.cod + " " + self.text.decode("UTF-8")
+
+
+class AESCipher:
+    def __init__(self, key):
+        self.bs = 16
+        self.key = sha256(key.encode('UTF-8')).digest()
+
+    def pad(self, s):
+        return s + (self.bs - len(s) % self.bs) * chr(self.bs - len(s) % self.bs)
+
+    @staticmethod
+    def unpad(s):
+        return s[0:-s[-1]]
+
+    def encrypt(self, note_text):
+        note_text = self.pad(note_text)
+        iv = Random.new().read(AES.block_size)
+        cipher = AES.new(self.key, AES.MODE_CBC, iv)
+        return b64encode(iv + cipher.encrypt(note_text))
+
+    def decrypt(self, note_cod):
+        try:
+            with shelve.open("./data/notes", "r") as notes_db:
+                enc = b64decode(notes_db[note_cod].text)
+                iv = enc[:16]
+                cipher = AES.new(self.key, AES.MODE_CBC, iv)
+                print(f'''
+###########################################
+ID: {notes_db[note_cod].cod}
+Title: {notes_db[note_cod].title}
+Text: {self.unpad(cipher.decrypt(enc[16:])).decode('UTF-8')}
+###########################################''')
+        except KeyError:
+            print(f"\nNo note with the id {note_cod} exists")
 
 
 def nterm_usage():
@@ -92,7 +99,7 @@ def get_total_notes():
         with shelve.open('./data/notes', 'r') as notes_db:
             total_notes = notes_db['total']
     except dbmError:
-        os.mkdir("./data")
+        mkdir("./data")
         with shelve.open("./data/notes") as notes_db:
             notes_db["total"] = total_notes = 0
 

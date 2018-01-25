@@ -1,5 +1,4 @@
-import sys
-from dbm import error as dbmError
+from sys import argv
 from notes import *
 
 
@@ -57,7 +56,7 @@ def main(args):
 
 if __name__ == "__main__":
     try:
-        if main(sys.argv) == -1:
+        if main(argv) == -1:
             nterm_usage()
     except FileNotFoundError:
         print("\nThere are no notes nor reminders available")
