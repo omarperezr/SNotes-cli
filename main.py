@@ -8,7 +8,7 @@ def main(args):
     if arg_len > 5 or arg_len == 0:
         return -1
 
-    if args[1] == "-n" or args[1] == "--note":
+    if args[1] in ("-n", "--note"):
 
         if arg_len == 3:
             new_note(args[2], args[3])
@@ -25,25 +25,25 @@ def main(args):
 #        if arg_len != 5:
 #            return -1
 
-    elif args[1] == "-l" or args[1] == "--list":
+    elif args[1] in ("-l", "--list"):
         if arg_len != 1:
             return -1
 
         show_all_notes()
 
-    elif args[1] == "-s" or args[1] == "--search":
+    elif args[1] in ("-s", "--search"):
         if arg_len != 2:
             return -1
 
         search_note(args[2])
 
-    elif args[1] == "-d" or args[1] == "--delete":
+    elif args[1] in ("-d", "--delete"):
         if arg_len != 2:
             return -1
 
         del_note(args[2])
 
-    elif args[1] == "-D" or args[1] == "--delete-all":
+    elif args[1] in ("-D", "--delete-all"):
         if arg_len != 1:
             return -1
 
