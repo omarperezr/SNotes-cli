@@ -1,5 +1,7 @@
+import os
 import shelve
 from datetime import datetime
+from dbm import error as dbmError
 
 import base64
 import hashlib
@@ -7,7 +9,7 @@ from Crypto import Random
 from Crypto.Cipher import AES
 
 
-__all__ = ['Note', 'termn_usage', 'new_note', 'search_note', 'show_all_notes', 'del_note', 'del_all',
+__all__ = ['Note', 'nterm_usage', 'new_note', 'search_note', 'show_all_notes', 'del_note', 'del_all',
            'AESCipher']
 
 
@@ -61,35 +63,36 @@ Last modification: {self.date}
         return self.title + " " + self.cod + " " + self.text.decode("UTF-8")
 
 
-def termn_usage():
+def nterm_usage():
     print('''
-    usage: termn [OPTION] [<ARGUMENTS>]
+usage: nterm [OPTION] [<ARGUMENTS>]
 
-        -n, --note              Creates a new note with title and text
-        -p, --encrypt           Use this flag after a note to encrypt it with the password after the flag
-        -u, --decrypt           Use this flag to decrypt your note with the password after the flag
-        -r, --reminder          Creates a new reminder
-        -s, --search            Searches for a note or reminder by id, title and text (CASE SENSITIVE)
-        -l, --list              Shows a list of every note and reminder sorted by modification
-        -d, --delete            Deletes an specified note or reminder by id
-        -D, --delete-all        Deletes EVERY note and reminder saved
-        -h, --help              Shows this help document
+    -n, --note              Creates a new note with title and text
+    -p, --encrypt           Use this flag after a note to encrypt it with a password
+    -u, --decrypt           Use this flag to decrypt your note a the password
+    -r, --reminder          Creates a new reminder
+    -s, --search            Searches for a note or reminder by id, title and text (CASE SENSITIVE)
+    -l, --list              Shows a list of every note and reminder sorted by modification
+    -d, --delete            Deletes an specified note or reminder by id
+    -D, --delete-all        Deletes EVERY note and reminder saved
+    -h, --help              Shows this help document
         
-    examples:
-        termn -n "Test 1" "Omar is really a nice man"                               <-- Creates a new note
-        termn -n "Test 2" "This is a super secret message" -p "This is a password"  <-- Creates an encrypted note
-        termn -n -u n1 "the password i used"                                        <-- Decrypts an encrypted note
-        termn -s n1                                                                 <-- Search for a note with id n1
-        termn -l                                                                    <-- Lists every note
-        termn -d n1                                                                 <-- Deletes a note with id n1
-        termn -D                                                                    <-- Deletes every note''')
+examples:
+    >   nterm --note "The title" "This is the text of the note"
+    >   nterm --note "The title" "This is a secret message" --encrypt "This is the password"
+    >   nterm --note n1 --decrypt "The password I used"
+    >   nterm --list
+    >   nterm --delete n1
+    >   nterm --delete-all
+    >   nterm --search n1''')
 
 
 def get_total_notes():
     try:
         with shelve.open('./data/notes', 'r') as notes_db:
             total_notes = notes_db['total']
-    except  Exception:
+    except dbmError:
+        os.mkdir("./data")
         with shelve.open("./data/notes") as notes_db:
             notes_db["total"] = total_notes = 0
 

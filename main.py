@@ -1,4 +1,5 @@
 import sys
+from dbm import error as dbmError
 from notes import *
 
 
@@ -15,9 +16,9 @@ def main(args):
         elif arg_len == 5 and (args[4] == "-p" or args[4] == "--encrypt"):
             cipher = AESCipher(args[5])
             new_note(args[2], cipher.encrypt(args[3]))
-        elif arg_len == 4 and (args[2] == "-u" or args[2] == "--decrypt"):
+        elif arg_len == 4 and (args[3] == "-u" or args[3] == "--decrypt"):
             cipher = AESCipher(args[4])
-            cipher.decrypt(args[3])
+            cipher.decrypt(args[2])
         else:
             return -1
 
@@ -55,5 +56,10 @@ def main(args):
 
 
 if __name__ == "__main__":
-    if main(sys.argv) == -1:
-        termn_usage()
+    try:
+        if main(sys.argv) == -1:
+            nterm_usage()
+    except FileNotFoundError:
+        print("\nThere are no notes nor reminders available")
+    except dbmError:
+        print("\nThere are no notes nor reminders available")
