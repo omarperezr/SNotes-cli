@@ -1,7 +1,7 @@
-from os import mkdir
 import shelve
-from datetime import datetime
+from os import mkdir
 from dbm import error
+from datetime import datetime
 
 from hashlib import sha256
 from base64 import b64encode, b64decode
@@ -33,7 +33,7 @@ Last modification: {self.date}
 ############################################'''
 
     def get_data(self):
-        return self.title + " " + self.cod + " " + self.text.decode("UTF-8")
+        return f"{self.title} {self.cod} {self.text}"
 
 
 class AESCipher:
