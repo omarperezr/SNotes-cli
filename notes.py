@@ -1,26 +1,27 @@
 import shelve
 from os import mkdir
-from dbm import error
+from dbm import error as dbmError
+from binascii import Error as binasciiError
 from datetime import datetime
 
 from hashlib import sha256
-from base64 import b64encode, b64decode
+import base64
 from Crypto import Random
 from Crypto.Cipher import AES
 
 
-__all__ = ['Note', 'new_note', 'search_note', 'show_all_notes', 'del_note', 'del_all', 'nterm_usage',
+__all__ = ['Note', 'new_note', 'search_note', 'show_all_notes', 'del_note', 'del_all', 'usage',
            'AESCipher', 'dbmError']
 
-dbmError = error
-
+dbmError = dbmError        # Error raised when having problems with shelve
 
 class Note:
-    def __init__(self, cod, title, text, date):
+    """ Defines the all the data that a note has and functions that return that data """
+    def __init__(self, cod, title, text):
         self.cod = cod
         self.title = title
         self.text = text
-        self.date = date
+        self.date = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
 
     def __str__(self):
         return f'''
@@ -33,31 +34,37 @@ Last modification: {self.date}
 ############################################'''
 
     def get_data(self):
+        """ Returns a string with al the data in a Note """
         return f"{self.title} {self.cod} {self.text}"
 
 
 class AESCipher:
+    """ Encrypts text with the AES algorithm """
     def __init__(self, key):
         self.bs = 16
         self.key = sha256(key.encode('UTF-8')).digest()
 
     def pad(self, s):
+        """ Takes a string and makes sure it is a multiple of bs and alters it if it isn't """
         return s + (self.bs - len(s) % self.bs) * chr(self.bs - len(s) % self.bs)
 
     @staticmethod
     def unpad(s):
+        """ Does the inverse of pad """
         return s[0:-s[-1]]
 
     def encrypt(self, note_text):
+        """ Returns a string encrypted with AES """
         note_text = self.pad(note_text)
         iv = Random.new().read(AES.block_size)
         cipher = AES.new(self.key, AES.MODE_CBC, iv)
-        return b64encode(iv + cipher.encrypt(note_text))
+        return base64.b64encode(iv + cipher.encrypt(note_text))
 
     def decrypt(self, note_cod):
+        """ Prints a string decrypted with AES """
         try:
             with shelve.open("./data/notes", "r") as notes_db:
-                enc = b64decode(notes_db[note_cod].text)
+                enc = base64.b64decode(notes_db[note_cod].text)
                 iv = enc[:16]
                 cipher = AES.new(self.key, AES.MODE_CBC, iv)
                 print(f'''
@@ -68,9 +75,70 @@ Text: {self.unpad(cipher.decrypt(enc[16:])).decode('UTF-8')}
 ###########################################''')
         except KeyError:
             print(f"\nNo note with the id {note_cod} exists")
+        except binasciiError:
+            print("\nThat note can't be decrypted")
 
 
-def nterm_usage():
+def get_total_notes():
+    """ Returns the total of notes created """
+    try:
+        with shelve.open('./data/notes', 'r') as notes_db:
+            total_notes = notes_db['total']
+    except dbmError:
+        mkdir("./data")
+        with shelve.open("./data/notes") as notes_db:
+            notes_db["total"] = total_notes = 0
+
+    return total_notes
+
+
+def show_all_notes():
+    """ Prints every note that has been saved """
+    with shelve.open('./data/notes', 'r') as notes_db:
+        if len(notes_db) > 1:
+            for i in notes_db:
+                if i != "total":
+                    print(notes_db[i])
+        else:
+            print("\nThere are no notes nor reminders available")
+
+
+def new_note(note_title, note_text):
+    """ Creates a new Note objects and serializes it """
+    note_cod = f'n{get_total_notes()+1}'
+    with shelve.open("./data/notes") as notes_db:
+        notes_db['total'] += 1
+        notes_db[str(note_cod)] = Note(note_cod, note_title, note_text)
+        print(notes_db[str(note_cod)])
+
+
+def del_note(note_cod):
+    """ Deletes a Note object from the database by ID """
+    with shelve.open("./data/notes") as notes_db:
+        if notes_db.pop(str(note_cod), -1) == -1:
+            print("\nNo note with ID:", note_cod)
+
+
+def search_note(note_info):
+    """ Searches for a note in the database by ID """
+    with shelve.open('./data/notes', 'r') as notes_db:
+        if len(notes_db) > 1:
+
+            for i in notes_db:
+                if i != "total" and note_info in notes_db[i].get_data():
+                    print(notes_db[i])
+        else:
+            print("\nThere are no notes nor reminders with that data")
+
+
+def del_all():
+    """ Deletes every note created """
+    with shelve.open("./data/notes", 'n') as notes_db:
+        notes_db['total'] = 0
+
+
+def usage():
+    """ Prints the usage of nterm and examples """
     print('''
 usage: nterm [OPTION] [<ARGUMENTS>]
 
@@ -92,56 +160,3 @@ examples:
     >   nterm --delete n1
     >   nterm --delete-all
     >   nterm --search n1''')
-
-
-def get_total_notes():
-    try:
-        with shelve.open('./data/notes', 'r') as notes_db:
-            total_notes = notes_db['total']
-    except dbmError:
-        mkdir("./data")
-        with shelve.open("./data/notes") as notes_db:
-            notes_db["total"] = total_notes = 0
-
-    return total_notes
-
-
-def show_all_notes():
-    with shelve.open('./data/notes', 'r') as notes_db:
-        if len(notes_db) > 1:
-            for i in notes_db:
-                if i != "total":
-                    print(notes_db[i])
-        else:
-            print("\nThere are no notes nor reminders available")
-
-
-def new_note(note_title, note_text):
-    date = datetime.now().strftime("%d/%m/%Y %H:%M:%S")             # The current date and time when creating the note
-    note_cod = f'n{get_total_notes()+1}'
-    with shelve.open("./data/notes") as notes_db:                               # Open the notes database
-        notes_db['total'] += 1                                                  # Add 1 to the total of notes created
-        notes_db[str(note_cod)] = Note(note_cod, note_title, note_text, date)   # Add the new note to the database
-        print(notes_db[str(note_cod)])                                          # Print the new note
-
-
-def del_note(note_cod):
-    with shelve.open("./data/notes") as notes_db:
-        if notes_db.pop(str(note_cod), -1) == -1:
-            print("\nNo note with ID:", note_cod)
-
-
-def search_note(note_info):
-    with shelve.open('./data/notes', 'r') as notes_db:
-        if len(notes_db) > 1:
-
-            for i in notes_db:
-                if i != "total" and note_info in notes_db[i].get_data():
-                    print(notes_db[i])
-        else:
-            print("\nThere are no notes nor reminders with that data")
-
-
-def del_all():
-    with shelve.open("./data/notes", 'n') as notes_db:
-        notes_db['total'] = 0

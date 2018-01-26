@@ -12,10 +12,10 @@ def main(args):
 
         if arg_len == 3:
             new_note(args[2], args[3])
-        elif arg_len == 5 and (args[4] == "-p" or args[4] == "--encrypt"):
+        elif arg_len == 5 and args[4] in ("-p", "--encrypt"):
             cipher = AESCipher(args[5])
             new_note(args[2], cipher.encrypt(args[3]))
-        elif arg_len == 4 and (args[3] == "-u" or args[3] == "--decrypt"):
+        elif arg_len == 4 and args[3] in ("-u", "--decrypt"):
             cipher = AESCipher(args[4])
             cipher.decrypt(args[2])
         else:
@@ -57,7 +57,7 @@ def main(args):
 if __name__ == "__main__":
     try:
         if main(argv) == -1:
-            nterm_usage()
+            usage()
     except FileNotFoundError:
         print("\nThere are no notes nor reminders available")
     except dbmError:
