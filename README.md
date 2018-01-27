@@ -4,5 +4,4 @@
 <ul>
 	<li>Create notes</li>
 	<li>Create encrypted notes</li>
-	<li>Create reminders</li>
 </ul>
