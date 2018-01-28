@@ -79,6 +79,34 @@ Text: {self.unpad(cipher.decrypt(enc[16:])).decode('UTF-8')}
             print("\nThat note can't be decrypted")
 
 
+class NoteModifyWindow(tk.Frame):
+    """ Creates a window to modify an already created note selected by ID """
+    def __init__(self, parent, note_cod, *args, **kwargs):
+        tk.Frame.__init__(self, parent, *args, **kwargs)
+        self.parent = parent
+        self.note_cod = note_cod
+        self.note_text = self.get_note_text()
+
+        self.tk_note_text_entry = tk.Text(self, width=40, height=10)
+        self.tk_note_text_entry.insert('insert', self.note_text)
+        self.tk_note_text_entry.pack()
+
+        self.tk_note_text_button = tk.Button(self, bg="sky blue", text="Modify", command=self.save_note_text).\
+        pack(fill='x', expand=True, padx=3, pady=3, ipadx=20, ipady=15)
+
+    def get_note_text(self):
+        """ Returns a string with the text of the note to be modified """
+        with shelve.open("./data/notes") as notes_db:
+            return notes_db[self.note_cod].text
+
+    def save_note_text(self):
+        """ Saves the modified text to the database """
+        with shelve.open("./data/notes") as notes_db:
+            notes_db[self.note_cod] = Note(notes_db[self.note_cod].cod, notes_db[self.note_cod].title, self.tk_note_text_entry.get("1.0", 'end'))
+            print(notes_db[self.note_cod])
+        self.quit()
+
+
 def get_total_notes():
     """ Returns the total of notes created """
     try:
@@ -111,20 +139,17 @@ def new_note(note_title, note_text):
         notes_db[str(note_cod)] = Note(note_cod, note_title, note_text)
         print(notes_db[str(note_cod)])
 
+
 def modify_note(note_cod):
-    """ Modifies an already created note selected by ID """
-    with shelve.open("./data/notes") as notes_db:
-        note_text = notes_db[note_cod].text
+    root = tk.Tk()
+    root.title("Terminal-N")
+    NoteModifyWindow(root, note_cod).pack(side="top", fill="both", expand=True)
+    root.mainloop()
 
-        modify_window = tk.Tk()
-        modify_window.title(f"Modifying note '{note_cod}'")
-        
-        mnote_text = tk.StringVar()
-        mnote_text.set(note_text)
 
-        mnote_text_entry = tk.Entry(modify_window, textvariable = mnote_text).grid(row=1, column=0, padx=5, pady=5)
-
-        modify_window.mainloop()
+def save(note_object, entry_object_text):
+    note_object.text = entry_object_text
+    print(note_object.text)
 
 def del_note(note_cod):
     """ Deletes a Note object from the database selected by ID """
@@ -159,10 +184,10 @@ usage: nterm [OPTION] [<ARGUMENTS>]
     -n, --note              Creates a new note with title and text
     -p, --encrypt           Use this flag after a note to encrypt it with a password
     -u, --decrypt           Use this flag to decrypt your note a the password
-    -r, --reminder          Creates a new reminder
+    -m, --modify            Modifies a note selected by id
     -s, --search            Searches for a note or reminder by id, title and text (CASE SENSITIVE)
     -l, --list              Shows a list of every note and reminder sorted by modification
-    -d, --delete            Deletes an specified note or reminder by id
+    -d, --delete            Deletes an specified note or reminder selected by id
     -D, --delete-all        Deletes EVERY note and reminder saved
     -h, --help              Shows this help document
         
@@ -170,6 +195,7 @@ examples:
     >   nterm --note "The title" "This is the text of the note"
     >   nterm --note "The title" "This is a secret message" --encrypt "This is the password"
     >   nterm --note n1 --decrypt "The password I used"
+    >   nterm --modify n1
     >   nterm --list
     >   nterm --delete n1
     >   nterm --delete-all

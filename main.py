@@ -25,6 +25,12 @@ def main(args):
 #        if arg_len != 5:
 #            return -1
 
+    elif args[1] in ("-m", "--modify"):
+        if arg_len != 2:
+            return -1
+
+        modify_note(args[2])
+
     elif args[1] in ("-l", "--list"):
         if arg_len != 1:
             return -1
