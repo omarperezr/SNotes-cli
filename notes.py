@@ -141,10 +141,13 @@ def new_note(note_title, note_text):
 
 
 def modify_note(note_cod):
-    root = tk.Tk()
-    root.title("Terminal-N")
-    NoteModifyWindow(root, note_cod).pack(side="top", fill="both", expand=True)
-    root.mainloop()
+    try:
+        root = tk.Tk()
+        root.title("Terminal-N")
+        NoteModifyWindow(root, note_cod).pack(side="top", fill="both", expand=True)
+        root.mainloop()
+    except KeyError:
+        print(f"\nNo note with ID {note_cod}")
 
 
 def save(note_object, entry_object_text):
