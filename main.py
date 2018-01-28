@@ -21,10 +21,6 @@ def main(args):
         else:
             return -1
 
-#    elif args[1] == "-r" or args[1] == "--remainder":
-#        if arg_len != 5:
-#            return -1
-
     elif args[1] in ("-m", "--modify"):
         if arg_len != 2:
             return -1
