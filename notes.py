@@ -1,17 +1,17 @@
+import base64
 import shelve
-from os import mkdir
-from dbm import error as dbmError
+import tkinter as tk
 from binascii import Error as binasciiError
 from datetime import datetime
-
+from dbm import error as dbmError
 from hashlib import sha256
-import base64
+from os import mkdir
+
 from Crypto import Random
 from Crypto.Cipher import AES
 
-
-__all__ = ['Note', 'new_note', 'search_note', 'show_all_notes', 'del_note', 'del_all', 'usage',
-           'AESCipher', 'dbmError']
+__all__ = ['Note', 'new_note', 'modify_note', 'search_note', 'show_all_notes', 'del_note', 'del_all',
+            'usage', 'AESCipher', 'dbmError']
 
 dbmError = dbmError        # Error raised when having problems with shelve
 
@@ -111,9 +111,23 @@ def new_note(note_title, note_text):
         notes_db[str(note_cod)] = Note(note_cod, note_title, note_text)
         print(notes_db[str(note_cod)])
 
+def modify_note(note_cod):
+    """ Modifies an already created note selected by ID """
+    with shelve.open("./data/notes") as notes_db:
+        note_text = notes_db[note_cod].text
+
+        modify_window = tk.Tk()
+        modify_window.title(f"Modifying note '{note_cod}'")
+        
+        mnote_text = tk.StringVar()
+        mnote_text.set(note_text)
+
+        mnote_text_entry = tk.Entry(modify_window, textvariable = mnote_text).grid(row=1, column=0, padx=5, pady=5)
+
+        modify_window.mainloop()
 
 def del_note(note_cod):
-    """ Deletes a Note object from the database by ID """
+    """ Deletes a Note object from the database selected by ID """
     with shelve.open("./data/notes") as notes_db:
         if notes_db.pop(str(note_cod), -1) == -1:
             print("\nNo note with ID:", note_cod)
