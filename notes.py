@@ -37,7 +37,6 @@ ID: {self.cod}                              {self.date}
 Title: {self.title}
     
     {self.text}
-
 ---------------------------------------------------------
 '''
 
@@ -45,10 +44,9 @@ Title: {self.title}
         return f'''
 ID: {self.cod}                              {self.date}
 ---------------------------------------------------------
-Title: {self.title[:20]}
-
-    {self.text[:77]}...
-
+Title: {self.title}
+    
+    {self.text[:77]} ...
 ---------------------------------------------------------
 '''
 
@@ -74,20 +72,21 @@ class AESCipher:
         return base64.b64encode(iv + cipher.encrypt(note_text))
 
     def decrypt(self, note_cod):
-        try:
-            with shelve.open("./data/notes", "r") as notes_db:
-                enc = base64.b64decode(notes_db[note_cod].text)
-                iv = enc[:16]
-                cipher = AES.new(self.key, AES.MODE_CBC, iv)
-                print(f'''
-ID: {notes_db[note_cod].cod} Title: {notes_db[note_cod].title[:20]}...
+        with shelve.open("./data/notes", "r") as notes_db:
+            if note_cod in notes_db:
+                try:
+                    enc = base64.b64decode(notes_db[note_cod].text)
+                    iv = enc[:16]
+                    cipher = AES.new(self.key, AES.MODE_CBC, iv)
+                    print(pretty_string(f'''
+ID: {notes_db[note_cod].cod} Title: {notes_db[note_cod].title[:20]}
 ---------------------------------------------------------
-Text: {pretty_string(self.unpad(cipher.decrypt(enc[16:])).decode('UTF-8'))}
----------------------------------------------------------''')
-        except KeyError:
-            print(f"\nNo note with the id {note_cod} exists")
-        except binasciiError:
-            print("\nThat note can't be decrypted")
+Text: {self.unpad(cipher.decrypt(enc[16:])).decode('UTF-8')}
+---------------------------------------------------------'''))
+                except binasciiError:
+                    print("\nThat note can't be decrypted")
+            else:
+                print(f"\nNo note with the id {note_cod}")
 
 
 class NoteModifyWindow(tk.Frame):
@@ -135,7 +134,7 @@ def new_note(note_title, note_text):
     with shelve.open("./data/notes") as notes_db:
         notes_db['total'] += 1
         notes_db[note_cod] = Note(note_cod, note_title, note_text)
-        print(f'\n{notes_db[note_cod]}')
+        print(f'\n{pretty_string(str(notes_db[note_cod]))}')
 
 
 def get_total_notes():
@@ -149,7 +148,6 @@ def get_total_notes():
             notes_db["total"] = total_notes = 0
 
     return total_notes
-
 # Custom Argparse Functions
 
 
@@ -161,7 +159,7 @@ class CreateNote(argparse.Action):
 class CreateEncryptedNote(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
         cipher = AESCipher(values[2])
-        new_note(values[0], cipher.encrypt(values[1]))
+        new_note(values[0], cipher.encrypt(values[1]).decode('UTF-8'))
 
 
 class DecryptNote(argparse.Action):
@@ -173,13 +171,14 @@ class DecryptNote(argparse.Action):
 class ModifyNote(argparse.Action):
     """ Modifies an available note selected by ID """
     def __call__(self, parser, namespace, value, option_string=None):
-        try:
-            root = tk.Tk()
-            root.title(f"Note {value}")
-            NoteModifyWindow(root, value).pack(side="top", fill="both", expand=True)
-            root.mainloop()
-        except KeyError:
-            print(f"\nNo note with ID {value}")
+        with shelve.open('./data/notes', 'r') as notes_db:
+            if value in notes_db:
+                root = tk.Tk()
+                root.title(f"Note {value}")
+                NoteModifyWindow(root, value).pack(side="top", fill="both", expand=True)
+                root.mainloop()
+            else:
+                print(f"\nNo note with ID {value}")
 
 
 class RemoveNote(argparse.Action):
@@ -188,7 +187,9 @@ class RemoveNote(argparse.Action):
         with shelve.open("./data/notes") as notes_db:
             for note_cod in values:
                 if notes_db.pop(note_cod, -1) == -1:
-                    print("\nNo note with ID:", note_cod)
+                    print(f"\nNo note with ID: {note_cod}")
+                else:
+                    print(f"\nNote {note_cod} removed")
 
 
 class RemoveAll(argparse.Action):
@@ -196,6 +197,7 @@ class RemoveAll(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
         with shelve.open("./data/notes", 'n') as notes_db:
             notes_db['total'] = 0
+        print("\nAll notes removed")
 
 
 class ShowNote(argparse.Action):
@@ -203,9 +205,9 @@ class ShowNote(argparse.Action):
     def __call__(self, parser, namespace, value, option_string=None):
         with shelve.open('./data/notes', 'r') as notes_db:
             if len(notes_db) > 1:
-                try:
+                if value in notes_db:
                     print(f'\n{pretty_string(str(notes_db[value]))}')
-                except KeyError:
+                else:
                     print(f"\nThere is no note with ID {value}")
             else:
                 print("\nThere are no notes available")
@@ -218,5 +220,6 @@ class ListAll(argparse.Action):
             if len(notes_db) > 1:
                 for i in list(notes_db.values())[1:]:
                     print(f'\n{pretty_string(i.shorter_str())}')
+                    input("\n\n<Enter> to continue...", )
             else:
                 print("\nThere are no notes available")
