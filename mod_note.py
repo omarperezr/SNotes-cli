@@ -14,6 +14,7 @@ def mod_note(value):
         else:
             print(f"\nNo note with ID {value}")
 
+
 class NoteModifyWindow(tk.Frame):
     """ Creates a window to modify an already created note selected by ID """
     def __init__(self, parent, note_cod, *args, **kwargs):

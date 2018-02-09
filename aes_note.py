@@ -5,7 +5,6 @@ from hashlib import sha256
 from Crypto.Cipher import AES
 
 
-
 class AESCipher:
     """ Encrypts text with the AES algorithm """
     def __init__(self, key):

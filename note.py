@@ -70,7 +70,7 @@ class DecryptNote(argparse.Action):
 class ModifyNote(argparse.Action):
     """ Modifies an available note selected by ID """
     def __call__(self, parser, namespace, value, option_string=None):
-        from note_mod import mod_note
+        from mod_note import mod_note
         if value[0] != 'e':
             mod_note(value)
         else:
