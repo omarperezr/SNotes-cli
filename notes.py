@@ -1,25 +1,21 @@
 import argparse
-import base64
 import shelve
-import textwrap
 import tkinter as tk
+from base64 import b64decode, b64encode
 from binascii import Error as binasciiError
 from datetime import datetime
-from dbm import error
 from hashlib import sha256
-from os import mkdir
+from textwrap import fill as tfill
 
 from Crypto import Random
 from Crypto.Cipher import AES
 
-__all__ = ['dbmError', 'argparse', 'CreateNote', 'CreateEncryptedNote', 'DecryptNote', 'ModifyNote', 'ShowNote',
+__all__ = ['argparse', 'CreateNote', 'CreateEncryptedNote', 'DecryptNote', 'ModifyNote', 'ShowNote',
            'ListAll', 'RemoveNote', 'RemoveAll']
-
-dbmError = error        # Error raised when having problems with shelve
 
 
 def pretty_string(string):
-    return textwrap.fill(string, width=57, replace_whitespace=False)
+    return tfill(string, width=57, replace_whitespace=False)
 
 
 class Note:
@@ -69,13 +65,13 @@ class AESCipher:
         note_text = self.pad(note_text)
         iv = Random.new().read(AES.block_size)
         cipher = AES.new(self.key, AES.MODE_CBC, iv)
-        return base64.b64encode(iv + cipher.encrypt(note_text))
+        return b64encode(iv + cipher.encrypt(note_text))
 
     def decrypt(self, note_cod):
         with shelve.open("./data/notes", "r") as notes_db:
             if note_cod in notes_db:
                 try:
-                    enc = base64.b64decode(notes_db[note_cod].text)
+                    enc = b64decode(notes_db[note_cod].text)
                     iv = enc[:16]
                     cipher = AES.new(self.key, AES.MODE_CBC, iv)
                     print(pretty_string(f'''
@@ -130,24 +126,12 @@ class NoteModifyWindow(tk.Frame):
 
 def new_note(note_title, note_text):
     """ Creates a new Note objects and serializes it """
-    note_cod = f'n{get_total_notes()+1}'
     with shelve.open("./data/notes") as notes_db:
+        note_cod = f'n{notes_db["total"]+1}'
         notes_db['total'] += 1
         notes_db[note_cod] = Note(note_cod, note_title, note_text)
         print(f'\n{pretty_string(str(notes_db[note_cod]))}')
 
-
-def get_total_notes():
-    """ Returns the total of notes created and creates the data folder if 1rst time use"""
-    try:
-        with shelve.open('./data/notes', 'r') as notes_db:
-            total_notes = notes_db['total']
-    except dbmError:
-        mkdir("./data")
-        with shelve.open("./data/notes") as notes_db:
-            notes_db["total"] = total_notes = 0
-
-    return total_notes
 # Custom Argparse Functions
 
 
@@ -185,11 +169,14 @@ class RemoveNote(argparse.Action):
     """ Deletes n notes from the database selected by ID """
     def __call__(self, parser, namespace, values, option_string=None):
         with shelve.open("./data/notes") as notes_db:
-            for note_cod in values:
-                if notes_db.pop(note_cod, -1) == -1:
-                    print(f"\nNo note with ID: {note_cod}")
-                else:
-                    print(f"\nNote {note_cod} removed")
+            if len(notes_db) > 1:
+                for note_cod in values:
+                    if notes_db.pop(note_cod, -1) == -1:
+                        print(f"\nNo note with ID: {note_cod}")
+                    else:
+                        print(f"\nNote {note_cod} removed")
+            else:
+                print("\nThere are no notes available")
 
 
 class RemoveAll(argparse.Action):
@@ -218,8 +205,9 @@ class ListAll(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
         with shelve.open('./data/notes', 'r') as notes_db:
             if len(notes_db) > 1:
+                print("\n\tPress <Enter> to show the next note")
                 for i in list(notes_db.values())[1:]:
                     print(f'\n{pretty_string(i.shorter_str())}')
-                    input("\n\n<Enter> to continue...", )
+                    input()
             else:
                 print("\nThere are no notes available")
