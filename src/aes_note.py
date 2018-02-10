@@ -33,10 +33,12 @@ class AESCipher:
                 enc = b64decode(notes_db[note_cod].text)
                 iv = enc[:16]
                 cipher = AES.new(self.key, AES.MODE_CBC, iv)
-                print(pretty_string(f'''
-ID: {notes_db[note_cod].cod} Title: {notes_db[note_cod].title[:20]}
+                print(pretty_string('''
+ID: {} Title: {}
 ---------------------------------------------------------
-Text: {self.unpad(cipher.decrypt(enc[16:])).decode('UTF-8')}
----------------------------------------------------------'''))
+Text: {}
+---------------------------------------------------------'''.format(notes_db[note_cod].cod,\
+                                                             notes_db[note_cod].title[:20],\
+                                                             self.unpad(cipher.decrypt(enc[16:])).decode('UTF-8'))))
             else:
-                print(f"\nNo note with the id {note_cod}")
+                print("No note with the id {}".format(note_cod))

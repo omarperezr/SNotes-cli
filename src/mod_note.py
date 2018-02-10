@@ -5,14 +5,14 @@ from note import Note, pretty_string
 
 
 def mod_note(value):
-    with shelve.open('./data/notes', 'r') as notes_db:
+    with shelve.open("./data/notes", 'r') as notes_db:
         if value in notes_db:
             root = tk.Tk()
-            root.title(f"Note {value}")
+            root.title("Note {}".format(value))
             NoteModifyWindow(root, value).pack(side="top", fill="both", expand=True)
             root.mainloop()
         else:
-            print(f"\nNo note with ID {value}")
+            print("No note with ID {}".format(value))
 
 
 class NoteModifyWindow(tk.Frame):
