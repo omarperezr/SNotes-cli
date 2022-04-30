@@ -1,0 +1,9 @@
+autopep8==1.6.0
+cffi==1.15.0
+cryptography==37.0.1
+protobuf==3.20.1
+pycodestyle==2.8.0
+pycparser==2.21
+pyperclip==1.8.2
+python-dotenv==0.20.0
+toml==0.10.2

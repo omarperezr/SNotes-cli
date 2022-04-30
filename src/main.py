@@ -1,5 +1,5 @@
-from NoteManager import NoteManager
 from core.settings import settings
+from NoteManager import NoteManager
 
 note_manager = NoteManager(settings.MASTER_PASSWORD)
 note_manager.new_note()

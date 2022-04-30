@@ -1,5 +1,3 @@
-import base64
-import os
 import pathlib
 from hashlib import sha256
 
