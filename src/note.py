@@ -1,132 +1,78 @@
-import argparse
-from textwrap import fill as tfill
+import base64
+import os
+import pathlib
+from hashlib import sha256
 
-__all__ = ["argparse", "CreateNote", "CreateEncryptedNote", "DecryptNote", "ModifyNote", "ShowNote",
-           "ListAll", "RemoveNote", "RemoveAll"]
+import pyperclip
+from cryptography.hazmat.primitives import padding
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 
-
-def pretty_string(string):
-    return tfill(string, width=57, replace_whitespace=False)
+import proto_definitions.notes_pb2 as ProtoNote
+from core.settings import settings
 
 
 class Note:
-    """ Defines the all the data that a note has and functions that return that data """
-    def __init__(self, cod, title, text):
-        from datetime import datetime
-        self.cod = cod
-        self.title = title
-        self.text = text
-        self.date = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+    def __init__(self, *args):
+        '''
+            Class in charge of serializing and encrypting/decrypting notes
+            *args can be title: str, body: str and isSecret: bool in that order or a ProtoNote.Note object
+        '''
+        if isinstance(args[0], ProtoNote.Note):
+            self.title = args[0].title
+            self.body = args[0].body
+            self.encryptedBody = args[0].encryptedBody
+            self.isSecret = args[0].isSecret
+            self.master_password = sha256(args[1].encode('UTF-8')).digest()
 
-    def __str__(self):
-        return '''
-ID: {}                              {}
----------------------------------------------------------
-Title: {}
-    
-    {}
----------------------------------------------------------
-'''.format(self.cod, self.date, self.title, self.text)
-
-    def shorter_str(self):
-        return '''
-ID: {}                              {}
----------------------------------------------------------
-Title: {}
-    
-    {} ...
----------------------------------------------------------
-'''.format(self.cod, self.date, self.title, self.text[:77])
-
-
-class CreateNote(argparse.Action):
-    def __call__(self, parser, namespace, values, option_string=None):
-        import shelve
-        with shelve.open("./data/notes") as notes_db:
-            notes_db["total"] += 1
-            note_cod = "n{}".format(notes_db["total"])
-            notes_db[note_cod] = Note(note_cod, values[0], values[1])
-            print("{}".format(pretty_string(str(notes_db[note_cod]))))
-
-
-class CreateEncryptedNote(argparse.Action):
-    def __call__(self, parser, namespace, values, option_string=None):
-        from aes_note import AESCipher, shelve
-        cipher = AESCipher(values[2])
-        with shelve.open("./data/notes") as notes_db:
-            notes_db["total"] += 1
-            note_cod = "e{}".format(notes_db["total"])
-            notes_db[note_cod] = Note(note_cod, values[0], cipher.encrypt(values[1]).decode("UTF-8"))
-            print("{}".format(pretty_string(str(notes_db[note_cod]))))
-
-
-class DecryptNote(argparse.Action):
-    def __call__(self, parser, namespace, values, option_string=None):
-        from aes_note import AESCipher
-        if values[0][0] == 'e':
-            cipher = AESCipher(values[1])
-            cipher.decrypt(values[0])
+            if self.isSecret:
+                self.decrypt()
         else:
-            print("Encrypted notes start with 'e'")
+            self.title = args[0]
+            self.body = args[1]
+            self.isSecret = args[2]
+            self.master_password = sha256(args[3].encode('UTF-8')).digest()
 
+            if self.isSecret:
+                self.encrypt()
 
-class ModifyNote(argparse.Action):
-    """ Modifies an available note selected by ID """
-    def __call__(self, parser, namespace, value, option_string=None):
-        from mod_note import mod_note
-        if value[0] != "e":
-            mod_note(value)
+    def copy(self):
+        isCopy = input("Copy to clipboard? N/y: ").lower().strip()
+
+        if isCopy == "y":
+            pyperclip.copy(self.body)
+
+    def serialize(self) -> None:
+        serialized_note = ProtoNote.Note()
+        serialized_note.title = self.title
+        if self.isSecret:
+            serialized_note.encryptedBody = self.body
         else:
-            print("You can't edit an encrypted note")
+            serialized_note.body = self.body
+        serialized_note.isSecret = self.isSecret
 
+        filepath = pathlib.Path(settings.DATA_PATH, self.title_to_filename())
+        with open(filepath, "wb") as fd:
+            fd.write(serialized_note.SerializeToString())
 
-class RemoveNote(argparse.Action):
-    """ Deletes n notes from the database selected by ID """
-    def __call__(self, parser, namespace, values, option_string=None):
-        import shelve
-        with shelve.open("./data/notes") as notes_db:
-            if len(notes_db) > 1:
-                for note_cod in values:
-                    if notes_db.pop(note_cod, -1) == -1:
-                        print("No note with ID: {}".format(note_cod))
-                    else:
-                        print("Note {} removed".format(note_cod))
-            else:
-                print("There are no notes available")
+    def encrypt(self) -> None:
+        encryptor = Cipher(algorithms.AES(
+            self.master_password), modes.ECB()).encryptor()
+        padder = padding.PKCS7(algorithms.AES(
+            self.master_password).block_size).padder()
+        padded_data = padder.update(
+            self.body.encode('utf-8')) + padder.finalize()
+        encrypted_text = encryptor.update(padded_data) + encryptor.finalize()
+        self.body = encrypted_text
 
+    def decrypt(self) -> None:
+        decryptor = Cipher(algorithms.AES(
+            self.master_password), modes.ECB()).decryptor()
+        padder = padding.PKCS7(algorithms.AES(
+            self.master_password).block_size).unpadder()
+        decrypted_data = decryptor.update(self.encryptedBody)
+        unpadded = padder.update(decrypted_data) + padder.finalize()
+        self.body = unpadded.decode('utf-8')
 
-class RemoveAll(argparse.Action):
-    """ Deletes every note created """
-    def __call__(self, parser, namespace, values, option_string=None):
-        import shelve
-        with shelve.open("./data/notes", "n") as notes_db:
-            notes_db["total"] = 0
-        print("All notes removed")
-
-
-class ShowNote(argparse.Action):
-    """ Searches for a note in the database by ID, Title and string in text """
-    def __call__(self, parser, namespace, value, option_string=None):
-        import shelve
-        with shelve.open("./data/notes", "r") as notes_db:
-            if len(notes_db) > 1:
-                if value in notes_db:
-                    print("{}".format(pretty_string(str(notes_db[value]))))
-                else:
-                    print("There is no note with ID {}".format(value))
-            else:
-                print("There are no notes available")
-
-
-class ListAll(argparse.Action):
-    """ Shows every available note """
-    def __call__(self, parser, namespace, values, option_string=None):
-        import shelve
-        with shelve.open("./data/notes", "r") as notes_db:
-            if len(notes_db) > 1:
-                print("\tPress <Enter> to show the next note")
-                for i in list(notes_db.values())[1:]:
-                    print("{}".format(pretty_string(i.shorter_str())))
-                    input()
-            else:
-                print("There are no notes available")
+    def title_to_filename(self) -> str:
+        file_name = self.title.lower().replace(";", "")
+        return file_name.replace(" ", ";")

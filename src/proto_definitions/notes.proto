@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+// Not necessary for Python but should still be declared to avoid name collisions 
+// in the Protocol Buffers namespace and non-Python languages
+package protonotes;
+
+
+message Note {
+    string title = 1;
+    string body = 2;
+    bytes encryptedBody = 3;
+    bool isSecret = 4;
+}
