@@ -1,4 +1,11 @@
-<h1>Terminal N</h1>
+# NTerminal
 
-<p>Do you want an easy way to store and retrieve your credentials directly from the terminal?</p>
-<p>NTerminal is a really simple command line tool that lets you create/update/delete notes and passwords, passwords are encrypted with AES using a master password so you dont need to remember all those postgresql, mongodb, server and other command line credentials. Once you select a password or note you'll get a prompt to copy the text straight to your clipboard. Storing notes and passwords has never been this easy</p>
+### Do you want an easy way to store and retrieve your credentials directly on the terminal?
+### NTerminal is a really simple command line tool that lets you do exactly that!
+
+#### Why is NTerminal great?
+- No need to remember multiple credentials, just set a master password and you won't need to worry remembering all those server and databases credentials anymore!
+- Create/update/delete notes and passwords and store them locally using protobuf so if you want to use them in another project with another language you can!
+- Encrypt your notes and passwords with military grade security (AES).
+- Get your data directly to your clipboard
+- The master password can be store locally with keyring so you don't have to enter your password constantly, the cached password will be deleted in the configured time. You can also choose to never store it in keyring
