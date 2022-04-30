@@ -52,17 +52,26 @@ class NoteManager:
 
         return all_stored_notes
 
-    def get_note(self) -> Note:
+    def get_notes(self) -> Note:
         '''
-            Shows a prompt for the user to select a note, it opens the proto note stored in the configured path
+            Shows a prompt with all the notes to select one note, it opens the proto note stored in the configured path
             if the note is encrypted it will decrypt it automaticaly with the  master password and print it 
             otherwise it will simply print it
         '''
         all_notes = self.show_all_notes()
-        note_title = input("\n: ")
+        note_title = input("\n: ").lower().strip()
 
-        note_filepath = pathlib.Path(settings.DATA_PATH, all_notes[note_title])
+        if note_title not in all_notes:
+            print("That note does not exist")
+            return None
+        return self.get_note_from_proto(note_title)
 
+    def get_note_from_proto(self, title: str) -> Note:
+        '''
+            Gets one Note selected by title
+        '''
+        all_notes = self.get_all_note_files()
+        note_filepath = pathlib.Path(settings.DATA_PATH, all_notes[title])
         proto_note = ProtoNote.Note()
         with open(note_filepath, "rb") as fd:
             proto_note.ParseFromString(fd.read())
