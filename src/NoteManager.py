@@ -16,6 +16,7 @@ class NoteManager:
         '''
             Creates a new note
         '''
+        print()
         title = input("Title: ")
         body = input("Body: ")
         isSecret = input("Encrypt? N/y: ").lower().strip()
@@ -42,12 +43,12 @@ class NoteManager:
         '''
         all_stored_notes = self.get_all_note_files()
         print()
-        print("Notes".rjust(7), "Modification date".rjust(57))
-        print("-"*67)
+        print("Notes".rjust(7), "Modification date".rjust(65))
+        print("-"*80)
         print()
         for n in all_stored_notes.keys():
             modified_time = datetime.fromtimestamp(pathlib.Path(settings.DATA_PATH,all_stored_notes[n]).stat().st_mtime, tz=timezone.utc).strftime('%Y-%m-%d')
-            print(f" {n}".ljust(15), "-".ljust(40, "-"), modified_time)
+            print(f" {n}".ljust(25), "-".ljust(40, "-"), modified_time)
 
         return all_stored_notes
 
@@ -58,7 +59,7 @@ class NoteManager:
             otherwise it will simply print it
         '''
         all_notes = self.show_all_notes()
-        note_title = input("\n:")
+        note_title = input("\n: ")
 
         note_filepath = pathlib.Path(settings.DATA_PATH, all_notes[note_title])
 
