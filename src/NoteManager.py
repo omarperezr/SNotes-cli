@@ -77,6 +77,7 @@ class NoteManager:
             proto_note.ParseFromString(fd.read())
 
         python_note = Note(proto_note, self.master_password)
+        python_note.copy()
         return python_note
 
     def print_note(self, note: Note) -> None:
