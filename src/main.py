@@ -1,8 +1,7 @@
-from core.settings import settings
-from utils.utils import clip_copy
-from NoteManager import NoteManager
-
 import sys
+
+from NoteManager import NoteManager
+from utils.utils import clip_copy
 
 
 def main():
@@ -18,22 +17,22 @@ def main():
         -g | --get              Gets a note by title
         -s | --select           Shows prompt with all notes to select one by title  
     """
-    
+
     note_manager = NoteManager()
 
     args = [a.lower() for a in sys.argv[1:]]
 
     if len(args) == 0:
         print(usage)
-    
+
     elif len(args) == 1:
         if args[0] in ('-n', '--new'):
             # New
-            new_note = note_manager.write_note()
+            new_note = note_manager.write()
             note_manager.print_note(new_note)
         elif args[0] in ('-m', '--modify'):
             # Modify
-            new_note = note_manager.write_note(modify=True)
+            new_note = note_manager.write(modify=True)
             note_manager.print_note(new_note)
         elif args[0] in ('-s', '--select'):
             # Select note
@@ -48,8 +47,9 @@ def main():
             note_manager.print_note(note)
             clip_copy(note.body)
         elif args[0] in ('-d', '--delete'):
-            note_manager.delete_note(args[1])
+            note_manager.delete(args[1])
             print(f"{args[1]} deleted!")
+
 
 if __name__ == '__main__':
     main()

@@ -1,13 +1,14 @@
+import os
 import pathlib
 from datetime import datetime, timezone
-import os
 from os import listdir
 from os.path import isfile, join
+
+import keyboard
 
 import proto_definitions.notes_pb2 as ProtoNote
 from core.settings import settings
 from Note import Note
-import keyboard
 from utils.utils import border_msg, get_login_cli
 
 
@@ -16,7 +17,7 @@ class NoteManager:
         username, password = get_login_cli()
         self.master_password = password
 
-    def write_note(self, modify: bool = False) -> Note:
+    def write(self, modify: bool = False) -> Note:
         '''
             Creates a new note
         '''
@@ -39,10 +40,22 @@ class NoteManager:
 
         return new_note
 
-    def delete_note(self, title):
+    def delete(self, title: str) -> None:
+        '''
+            Deletes a note by title
+        '''
         all_notes = self.get_all_note_files()
         note_filepath = pathlib.Path(settings.DATA_PATH, all_notes[title])
         os.remove(note_filepath)
+
+    def delete_all(self) -> None:
+        '''
+            Deletes all notes
+        '''
+        all_notes = self.get_all_note_files()
+        for title in all_notes:
+            note_filepath = pathlib.Path(settings.DATA_PATH, all_notes[title])
+            os.remove(note_filepath)
 
     def get_all_note_files(self) -> dict:
         '''
@@ -100,6 +113,6 @@ class NoteManager:
         '''
             Prints formatted data for a selected note
         '''
-        note_str = f"Title: {note.title}\nBody: {note.body}\nIs encrypted?: {note.isSecret}"
-        note_str = border_msg(note_str)
+        note_str = f"Body: {note.body}\nIs encrypted?: {note.isSecret}"
+        note_str = border_msg(note_str, title=note.title)
         print(note_str)

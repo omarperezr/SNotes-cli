@@ -6,7 +6,9 @@ from core.settings import settings
 
 
 def border_msg(msg, indent=1, width=None, title=None):
-    """Print message-box with optional title."""
+    '''
+        Print message-box with optional title
+    '''
     lines = msg.split('\n')
     space = " " * indent
     if not width:
@@ -24,16 +26,13 @@ def clip_copy(text):
     isCopy = input("Copy to clipboard? N/y: ").lower().strip()
 
     if isCopy == "y":
-        pyperclip.copy()
-
-def clip_paste():
-    pyperclip.paste()
+        pyperclip.copy(text)
 
 
 def get_login_cli(username=None, prompt=False):
     '''
     Get the password for the username out of the keyring.  If the password
-    isn't found in the keyring, ask for it from the command line.
+    isn't found in the keyring, ask for it from the command line
     '''
     disp_username = False
 
@@ -55,6 +54,13 @@ def get_login_cli(username=None, prompt=False):
 
 def set_password(username, passwd):
     '''
-    Writes the password to the keyring.
+    Writes the password to the keyring
     '''
     keyring.set_password(settings.PROJECT_TITLE, username, passwd)
+
+
+def del_password(username):
+    '''
+    Deletes the password from the keyring
+    '''
+    keyring.delete_password(settings.PROJECT_TITLE, username)
