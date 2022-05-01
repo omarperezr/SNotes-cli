@@ -1,7 +1,7 @@
 import sys
 
 from NoteManager import NoteManager
-from utils.utils import clip_copy
+from utils.utils import clip_copy, del_password
 
 
 def main():
@@ -35,18 +35,19 @@ def main():
             new_note = note_manager.write(modify=True)
             note_manager.print_note(new_note)
         elif args[0] in ('-s', '--select'):
-            # Select note
+            # Select prompt
             note_selected = note_manager.get_notes()
             note_manager.print_note(note_selected)
             clip_copy(note_selected.body)
 
     elif len(args) == 2:
         if args[0] in ('-g', '--get'):
-            # Get note by title
+            # Get by title
             note = note_manager.get_note_from_proto(args[1])
             note_manager.print_note(note)
             clip_copy(note.body)
         elif args[0] in ('-d', '--delete'):
+            # Delete by title
             note_manager.delete(args[1])
             print(f"{args[1]} deleted!")
 

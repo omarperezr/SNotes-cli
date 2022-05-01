@@ -1,20 +1,24 @@
 import os
 import pathlib
+import time
 from datetime import datetime, timezone
 from os import listdir
 from os.path import isfile, join
+from typing import Union
 
 import keyboard
 
 import proto_definitions.notes_pb2 as ProtoNote
 from core.settings import settings
 from Note import Note
-from utils.utils import border_msg, get_login_cli
+from utils.utils import border_msg, del_password, get_login_cli
 
 
 class NoteManager:
     def __init__(self) -> None:
-        username, password = get_login_cli()
+        self.master_password = ""
+        self.time_passed_since_last_login()
+        _, password = get_login_cli()
         self.master_password = password
 
     def write(self, modify: bool = False) -> Note:
@@ -96,11 +100,13 @@ class NoteManager:
             return None
         return self.get_note_from_proto(note_title)
 
-    def get_note_from_proto(self, title: str) -> Note:
+    def get_note_from_proto(self, title: str) -> Union[Note, None]:
         '''
             Gets one Note selected by title
         '''
         all_notes = self.get_all_note_files()
+        if not title in all_notes:
+            return None
         note_filepath = pathlib.Path(settings.DATA_PATH, all_notes[title])
         proto_note = ProtoNote.Note()
         with open(note_filepath, "rb") as fd:
@@ -116,3 +122,19 @@ class NoteManager:
         note_str = f"Body: {note.body}\nIs encrypted?: {note.isSecret}"
         note_str = border_msg(note_str, title=note.title)
         print(note_str)
+
+    def time_passed_since_last_login(self):
+        note = self.get_note_from_proto("__passdate__")
+        if note:
+            username, _ = get_login_cli()
+            last_entered_password_time = int(note.body)
+            mult_by = {"h": 3600, "m": 60, "s": 1}
+            time_unit = settings.PASSWORD_EXPIRATION[-1]
+            time_limit = int(
+                settings.PASSWORD_EXPIRATION[:-1]) * mult_by[time_unit]
+
+            if last_entered_password_time + time_limit <= int(time.time()):
+                del_password(username)
+                Note("__passdate__", str(int(time.time())), False, "").serialize()
+        else:
+            Note("__passdate__", str(int(time.time())), False, "").serialize()
