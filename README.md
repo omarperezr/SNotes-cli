@@ -1,9 +1,9 @@
-# NTerminal
+# SNotes-cli
 
 ### Do you want an easy way to store and retrieve your credentials directly on the terminal?
-### NTerminal is a really simple command line tool that lets you do exactly that!
+### SNotes is a really simple command line tool that lets you do exactly that!
 
-#### Why is NTerminal great?
+#### Why is SNotes great?
 - No need to remember multiple credentials, just set a master password and you won't need to worry remembering all those server and databases credentials anymore!
 - Create/update/delete notes and passwords and store them locally using protobuf so you can use them in another project with another language if you want!
 - Encrypt your notes and passwords with military grade security (AES)
