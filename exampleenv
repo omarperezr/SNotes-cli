@@ -1,2 +1,2 @@
 DATA_PATH=data/
-PASSWORD_EXPIRATION=
+PASSWORD_EXPIRATION=1h  # units can be h, m, s
