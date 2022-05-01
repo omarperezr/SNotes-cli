@@ -1,7 +1,6 @@
 import pathlib
 from hashlib import sha256
 
-import pyperclip
 from cryptography.hazmat.primitives import padding
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 
@@ -32,12 +31,6 @@ class Note:
 
             if self.isSecret:
                 self.encrypt()
-
-    def copy(self):
-        isCopy = input("Copy to clipboard? N/y: ").lower().strip()
-
-        if isCopy == "y":
-            pyperclip.copy(self.body)
 
     def serialize(self) -> None:
         serialized_note = ProtoNote.Note()

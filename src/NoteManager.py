@@ -1,23 +1,31 @@
 import pathlib
 from datetime import datetime, timezone
+import os
 from os import listdir
 from os.path import isfile, join
 
 import proto_definitions.notes_pb2 as ProtoNote
 from core.settings import settings
 from Note import Note
+import keyboard
+from utils.utils import border_msg, get_login_cli
 
 
 class NoteManager:
-    def __init__(self, master_password) -> None:
-        self.master_password = master_password
+    def __init__(self) -> None:
+        username, password = get_login_cli()
+        self.master_password = password
 
-    def new_note(self):
+    def write_note(self, modify: bool = False) -> Note:
         '''
             Creates a new note
         '''
-        print()
-        title = input("Title: ")
+        title = input("\nTitle: ")
+
+        if modify:
+            note_to_mod = self.get_note_from_proto(title.lower().strip())
+            keyboard.write(note_to_mod.body)
+
         body = input("Body: ")
         isSecret = input("Encrypt? N/y: ").lower().strip()
 
@@ -26,7 +34,15 @@ class NoteManager:
         else:
             isSecret = False
 
-        Note(title, body, isSecret, self.master_password).serialize()
+        new_note = Note(title, body, isSecret, self.master_password)
+        new_note.serialize()
+
+        return new_note
+
+    def delete_note(self, title):
+        all_notes = self.get_all_note_files()
+        note_filepath = pathlib.Path(settings.DATA_PATH, all_notes[title])
+        os.remove(note_filepath)
 
     def get_all_note_files(self) -> dict:
         '''
@@ -47,7 +63,8 @@ class NoteManager:
         print("-"*80)
         print()
         for n in all_stored_notes.keys():
-            modified_time = datetime.fromtimestamp(pathlib.Path(settings.DATA_PATH,all_stored_notes[n]).stat().st_mtime, tz=timezone.utc).strftime('%Y-%m-%d')
+            modified_time = datetime.fromtimestamp(pathlib.Path(
+                settings.DATA_PATH, all_stored_notes[n]).stat().st_mtime, tz=timezone.utc).strftime('%Y-%m-%d')
             print(f" {n}".ljust(25), "-".ljust(40, "-"), modified_time)
 
         return all_stored_notes
@@ -77,12 +94,12 @@ class NoteManager:
             proto_note.ParseFromString(fd.read())
 
         python_note = Note(proto_note, self.master_password)
-        python_note.copy()
         return python_note
 
     def print_note(self, note: Note) -> None:
         '''
             Prints formatted data for a selected note
         '''
-        print(f"Title: {note.title}\nBody: {note.body}\nIs encrypted?: {note.isSecret}")
-
+        note_str = f"Title: {note.title}\nBody: {note.body}\nIs encrypted?: {note.isSecret}"
+        note_str = border_msg(note_str)
+        print(note_str)
