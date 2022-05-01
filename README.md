@@ -5,7 +5,7 @@
 
 #### Why is NTerminal great?
 - No need to remember multiple credentials, just set a master password and you won't need to worry remembering all those server and databases credentials anymore!
-- Create/update/delete notes and passwords and store them locally using protobuf so if you want to use them in another project with another language you can!
-- Encrypt your notes and passwords with military grade security (AES).
+- Create/update/delete notes and passwords and store them locally using protobuf so you can use them in another project with another language if you want!
+- Encrypt your notes and passwords with military grade security (AES)
 - Get your data directly to your clipboard
-- The master password can be store locally with keyring so you don't have to enter your password constantly, the cached password will be deleted in the configured time. You can also choose to never store it in keyring
+- The master password can be stored locally with keyring so you don't have to enter your password constantly, the cached password will be deleted in the configured time. You can also choose to never store it in keyring
