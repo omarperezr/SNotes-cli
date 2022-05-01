@@ -3,7 +3,6 @@ import getpass
 import keyring
 import pyperclip
 from core.settings import settings
-import time
 
 
 def border_msg(msg, indent=1, width=None, title=None):

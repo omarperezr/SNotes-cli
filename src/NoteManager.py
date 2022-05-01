@@ -75,6 +75,7 @@ class NoteManager:
             and returns the correct title name and modified date for all the notes
         '''
         all_stored_notes = self.get_all_note_files()
+        all_stored_notes = {k:all_stored_notes[k] for k in all_stored_notes if not k.startswith("__")}
         print()
         print("Notes".rjust(7), "Modification date".rjust(65))
         print("-"*80)
