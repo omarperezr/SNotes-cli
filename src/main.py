@@ -1,8 +1,7 @@
-from email.policy import default
 import sys
 
 from NoteManager import NoteManager
-from utils.utils import clip_copy, del_password
+from utils.utils import clip_copy
 
 
 def main():
