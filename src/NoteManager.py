@@ -25,7 +25,7 @@ class NoteManager:
         '''
             Creates a new note
         '''
-        title = input("\nTitle: ")
+        title = input("\nTitle: ").strip()
 
         if modify:
             note_to_mod = self.get_note_from_proto(title.lower().strip())
@@ -49,8 +49,11 @@ class NoteManager:
             Deletes a note by title
         '''
         all_notes = self.get_all_note_files()
-        note_filepath = pathlib.Path(settings.DATA_PATH, all_notes[title])
-        os.remove(note_filepath)
+        if title in all_notes:
+            note_filepath = pathlib.Path(settings.DATA_PATH, all_notes[title])
+            os.remove(note_filepath)
+        else:
+            print(f"File: {note_filepath} does not exist")
 
     def delete_all(self) -> None:
         '''

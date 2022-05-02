@@ -1,3 +1,4 @@
+from email.policy import default
 import sys
 
 from NoteManager import NoteManager
@@ -8,7 +9,7 @@ def main():
     usage = """
     Usage:
         nterm.py [-n | --new] [-m | --modify] [-s | --select]
-        nterm.py [-g | --get] [-d | --delete] <note title>
+        nterm.py [-g | --get] [-d | --delete] "<note title>"
 
     Options:
         -n | --new              Creates new note
@@ -50,6 +51,8 @@ def main():
             # Delete by title
             note_manager.delete(args[1])
             print(f"{args[1]} deleted!")
+    else:
+        print(usage)
 
 
 if __name__ == '__main__':
