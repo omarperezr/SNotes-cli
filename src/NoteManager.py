@@ -139,6 +139,8 @@ class NoteManager:
 
             if last_entered_password_time + time_limit <= int(time.time()):
                 del_password(username)
+                print("ENTER YOUR MASTER PASSWORD\n--------------------------")
                 Note("__passdate__", str(int(time.time())), False, "").serialize()
         else:
             Note("__passdate__", str(int(time.time())), False, "").serialize()
+            print("ENTER YOUR MASTER PASSWORD\n--------------------------")
